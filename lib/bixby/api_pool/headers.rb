@@ -6,6 +6,9 @@ module Bixby
       attr_reader :status, :status_line
 
       def initialize(raw)
+        return if raw.nil? or raw.empty?
+
+        # parse header string
         lines = raw.split(/[\r\n]+/)
         @status_line = lines.shift
         @status_line =~ %r{^HTTP/[\d]+\.[\d]+ (\d+) (.*)$}

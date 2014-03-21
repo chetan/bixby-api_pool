@@ -8,6 +8,7 @@ module Bixby
       attr_accessor :body
 
       def initialize(client)
+        @options = Ethon::Easy::Mirror.from_easy(client).options
         @body = client.response_body
         @header_str = client.response_headers
         @status_line = @status = @headers = nil
@@ -15,6 +16,10 @@ module Bixby
 
       def headers
         @headers ||= parse_headers()
+      end
+
+      def return_code
+        @options[:return_code]
       end
 
       def status
@@ -26,15 +31,15 @@ module Bixby
       end
 
       def success?
-        status >= 200 && status < 300
+        return_code == :ok && (status >= 200 && status < 300)
       end
 
       def redirect?
-        status == 301 || status == 302 || status == 303 || status == 307
+        return_code == :ok && (status == 301 || status == 302 || status == 303 || status == 307)
       end
 
       def error?
-        !redirect? && !success?
+        return_code != :ok || (!redirect? && !success?)
       end
 
 

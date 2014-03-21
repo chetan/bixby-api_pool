@@ -27,6 +27,7 @@ module Bixby
       assert_equal "get", res.body
       assert_equal 200, res.status
       assert_equal "3", res.headers["Content-Length"]
+      assert_equal :ok, res.return_code
     end
 
     def test_not_found
@@ -40,6 +41,22 @@ module Bixby
       refute res.redirect?
       assert res.error?
       assert_equal 404, res.status
+      assert_equal :ok, res.return_code
+    end
+
+    def test_timeout
+      bad_url = "http://localhost:" + find_available_port().to_s
+      ret = Bixby::APIPool.get([bad_url], "test")
+      assert ret
+      assert_kind_of Array, ret
+      assert_equal 1, ret.size
+
+      res = ret.first
+      refute res.success?
+      refute res.redirect?
+      assert res.error?
+      assert_nil res.status
+      assert_equal :couldnt_connect, res.return_code
     end
 
     def test_get_multiple
@@ -80,6 +97,8 @@ module Bixby
       assert_equal "post", ret.first.body
     end
 
+
+
     private
 
     def start_server
@@ -97,7 +116,10 @@ module Bixby
     end
 
     def stop_server
-      TestApp.stop!
+      if @server_thread && @server_thread.alive? then
+        TestApp.stop!
+        # @server_thread.join
+      end
     end
 
     # wait for server to come up
