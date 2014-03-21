@@ -5,12 +5,12 @@ module Bixby
   class APIPool
     class Response < Hash
 
-      attr_accessor :body
+      attr_reader :body, :details
 
       def initialize(client)
-        @options = Ethon::Easy::Mirror.from_easy(client).options
+        @details = Ethon::Easy::Mirror.from_easy(client).options
+        @details.delete(:debug_info)
         @body = client.response_body
-        @header_str = client.response_headers
         @status_line = @status = @headers = nil
       end
 
@@ -19,11 +19,11 @@ module Bixby
       end
 
       def return_code
-        @options[:return_code]
+        @details[:return_code]
       end
 
       def status
-        headers.status
+        @status ||= @details[:response_code]
       end
 
       def status_line
@@ -31,11 +31,11 @@ module Bixby
       end
 
       def success?
-        return_code == :ok && (status >= 200 && status < 300)
+        return_code == :ok && status && (status >= 200 && status < 300)
       end
 
       def redirect?
-        return_code == :ok && (status == 301 || status == 302 || status == 303 || status == 307)
+        return_code == :ok && status && (status == 301 || status == 302 || status == 303 || status == 307)
       end
 
       def error?
@@ -46,7 +46,7 @@ module Bixby
       private
 
       def parse_headers
-        h = Headers.new(@header_str)
+        h = Headers.new(@details.delete(:response_headers))
         @header_str = nil
         h
       end

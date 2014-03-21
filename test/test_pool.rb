@@ -55,7 +55,7 @@ module Bixby
       refute res.success?
       refute res.redirect?
       assert res.error?
-      assert_nil res.status
+      assert_equal 0, res.status
       assert_equal :couldnt_connect, res.return_code
     end
 
