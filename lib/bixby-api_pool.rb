@@ -56,12 +56,7 @@ module Bixby
       ret = {}
       urls.each_with_index do |u, i|
 
-        if u.kind_of? Array then
-          url, options = [u.shift, u.shift]
-        elsif u.kind_of? String then
-          url = u
-          options = nil
-        end
+        url, options = extract_req(u)
 
         @thread_pool.process {
           begin
@@ -80,6 +75,23 @@ module Bixby
 
       @mon.wait_while { !finished? }
       return ret.keys.map{ |k| ret[k] }
+    end
+
+    def extract_req(u)
+      options = nil
+      if u.kind_of? Array then
+        url, options = [u.shift, u.shift]
+      elsif u.kind_of? String then
+        url = u
+      end
+
+      if options.nil? then
+        options = {}
+      elsif options.kind_of? String or (options.kind_of? Hash and !options.include? :body) then
+        options = { :body => options }
+      end
+
+      return [url, options]
     end
 
     def finished?

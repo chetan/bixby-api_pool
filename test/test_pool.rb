@@ -16,12 +16,52 @@ module Bixby
       stop_server()
     end
 
-    def test_foo
+    def test_simple_get
       ret = Bixby::APIPool.get([@url], "test")
       assert ret
-      flunk
+      assert_kind_of Array, ret
+      assert_equal 1, ret.size
+      assert_equal "get", ret.first
     end
 
+    def test_get_multiple
+      ret = Bixby::APIPool.get([@url]*10, "test")
+      assert ret
+      assert_kind_of Array, ret
+      assert_equal 10, ret.size
+      ret.each do |s|
+        assert_equal "get", s
+      end
+    end
+
+    def test_post
+      ret = Bixby::APIPool.post([@url], "test")
+      assert ret
+      assert_kind_of Array, ret
+      assert_equal 1, ret.size
+      assert_equal "post", ret.first
+    end
+
+    def test_post_multiple
+      ret = Bixby::APIPool.post([@url]*10, "test")
+      assert ret
+      assert_kind_of Array, ret
+      assert_equal 10, ret.size
+      ret.each do |s|
+        assert_equal "post", s
+      end
+    end
+
+    def test_post_body
+
+      reqs = [[@url, MultiJson.dump({:foo => "hello json"})]]
+
+      ret = Bixby::APIPool.post(reqs, "test")
+      assert ret
+      assert_kind_of Array, ret
+      assert_equal 1, ret.size
+      assert_equal "post", ret.first
+    end
 
     private
 
@@ -47,7 +87,7 @@ module Bixby
     def booted?
       res = ::Net::HTTP.get_response(URI(@url))
       if res.is_a?(::Net::HTTPSuccess) or res.is_a?(::Net::HTTPRedirection)
-        return res.body == "hi"
+        return res.body == "get"
       end
     rescue Errno::ECONNREFUSED, Errno::EBADF
       return false
