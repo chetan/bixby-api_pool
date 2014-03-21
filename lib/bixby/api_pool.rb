@@ -4,6 +4,7 @@ require 'actionpool'
 require 'ethon'
 
 require 'bixby/api_pool/request'
+require 'bixby/api_pool/response'
 
 module Bixby
   class APIPool
@@ -67,7 +68,7 @@ module Bixby
             c.reset
             c.http_request(r.url, r.action, r.options)
             c.perform
-            ret[i] = c.response_body
+            ret[i] = Response.new(c)
           ensure
             @completed += 1
             @client_pool << c

@@ -21,7 +21,25 @@ module Bixby
       assert ret
       assert_kind_of Array, ret
       assert_equal 1, ret.size
-      assert_equal "get", ret.first
+
+      res = ret.first
+      assert res.success?
+      assert_equal "get", res.body
+      assert_equal 200, res.status
+      assert_equal "3", res.headers["Content-Length"]
+    end
+
+    def test_not_found
+      ret = Bixby::APIPool.get([@url + "/404"], "test")
+      assert ret
+      assert_kind_of Array, ret
+      assert_equal 1, ret.size
+
+      res = ret.first
+      refute res.success?
+      refute res.redirect?
+      assert res.error?
+      assert_equal 404, res.status
     end
 
     def test_get_multiple
@@ -30,7 +48,7 @@ module Bixby
       assert_kind_of Array, ret
       assert_equal 10, ret.size
       ret.each do |s|
-        assert_equal "get", s
+        assert_equal "get", s.body
       end
     end
 
@@ -39,7 +57,7 @@ module Bixby
       assert ret
       assert_kind_of Array, ret
       assert_equal 1, ret.size
-      assert_equal "post", ret.first
+      assert_equal "post", ret.first.body
     end
 
     def test_post_multiple
@@ -49,7 +67,7 @@ module Bixby
       assert_kind_of Array, ret
       assert_equal 10, ret.size
       ret.each do |s|
-        assert_equal "post", s
+        assert_equal "post", s.body
       end
     end
 
@@ -59,7 +77,7 @@ module Bixby
       assert ret
       assert_kind_of Array, ret
       assert_equal 1, ret.size
-      assert_equal "post", ret.first
+      assert_equal "post", ret.first.body
     end
 
     private
