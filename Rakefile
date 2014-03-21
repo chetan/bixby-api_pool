@@ -14,8 +14,8 @@ require 'rake'
 require 'jeweler'
 Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://guides.rubygems.org/specification-reference/ for more options
-  gem.name = "bixby-api-pool"
-  gem.homepage = "https://github.com/chetan/bixby-api-pool"
+  gem.name = "bixby-api_pool"
+  gem.homepage = "https://github.com/chetan/bixby-api_pool"
   gem.license = "MIT"
   gem.summary = %Q{Simple API client pooling library}
   gem.description = %Q{A simple library for pooling API client connections}
