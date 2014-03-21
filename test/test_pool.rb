@@ -35,7 +35,7 @@ module Bixby
     end
 
     def test_post
-      ret = Bixby::APIPool.post([@url], "test")
+      ret = APIPool.fetch(APIPool::Request.new(@url, :post), "test")
       assert ret
       assert_kind_of Array, ret
       assert_equal 1, ret.size
@@ -43,7 +43,8 @@ module Bixby
     end
 
     def test_post_multiple
-      ret = Bixby::APIPool.post([@url]*10, "test")
+      reqs = [APIPool::Request.new(@url, :post)]*10
+      ret = Bixby::APIPool.fetch(reqs, "test")
       assert ret
       assert_kind_of Array, ret
       assert_equal 10, ret.size
@@ -53,10 +54,8 @@ module Bixby
     end
 
     def test_post_body
-
-      reqs = [[@url, MultiJson.dump({:foo => "hello json"})]]
-
-      ret = Bixby::APIPool.post(reqs, "test")
+      req = APIPool::Request.new(@url, :post, MultiJson.dump({:foo => "hello json"}))
+      ret = Bixby::APIPool.fetch(req, "test")
       assert ret
       assert_kind_of Array, ret
       assert_equal 1, ret.size
