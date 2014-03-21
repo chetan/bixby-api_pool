@@ -1,8 +1,8 @@
-# PROJECT_NAME
+# Bixby API Pool
 
-Description goes here.
+A simple API client connection pool library
 
-## Contributing to PROJECT_NAME
+## Contributing to Bixby API Pool
 
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it.
