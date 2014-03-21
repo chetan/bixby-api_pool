@@ -21,4 +21,5 @@ group :test do
 
   # gem "webmock", "~> 1.14.0", :require => false
   # gem "mocha", "~> 0.14.0", :require => false
+  gem "sinatra", "~> 1.4"
 end

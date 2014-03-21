@@ -18,5 +18,6 @@ $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'bixby-api_pool'
 
 require "base"
+require "support/webserver"
 
 Dir.glob(File.dirname(__FILE__) + "/../lib/**/*.rb").each{ |f| require f }

@@ -34,11 +34,11 @@ module Bixby
       end
 
       def get(urls, key, client_pool_size=4)
-        Fetcher.new(client_pool(key, client_pool_size), thread_pool).fetch(urls)
+        APIPool.new(client_pool(key, client_pool_size), thread_pool).fetch(urls)
       end
 
       def post(urls, key, client_pool_size=4)
-        Fetcher.new(client_pool(key, client_pool_size), thread_pool).fetch(urls, :post)
+        APIPool.new(client_pool(key, client_pool_size), thread_pool).fetch(urls, :post)
       end
 
     end
