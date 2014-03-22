@@ -36,13 +36,21 @@ module Bixby
         @thread_pool_size ||= 4
       end
 
+      def client_pool_size=(val)
+        @client_pool_size = val
+      end
+
+      def client_pool_size
+        @client_pool_size ||= 4
+      end
+
       # GET the list of URLs
-      def get(urls, key, client_pool_size=4)
+      def get(urls, key)
         reqs = urls.map{ |u| Request.new(u) }
         APIPool.new(client_pool(key, client_pool_size), thread_pool).fetch(reqs)
       end
 
-      def fetch(reqs, key, client_pool_size=4)
+      def fetch(reqs, key)
         reqs = [reqs] if not reqs.kind_of? Array
         APIPool.new(client_pool(key, client_pool_size), thread_pool).fetch(reqs)
       end
