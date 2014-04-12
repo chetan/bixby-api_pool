@@ -59,13 +59,18 @@ module Bixby
       assert_equal :couldnt_connect, res.return_code
     end
 
+    # check that we get our responses back in the same order they were sent
     def test_get_multiple
-      ret = Bixby::APIPool.get([@url]*10, "test")
+      urls = []
+      10.times{ |i| urls << URI.join(@url, "/echo/#{i}") }
+      ret = Bixby::APIPool.get(urls, "test")
+
       assert ret
       assert_kind_of Array, ret
       assert_equal 10, ret.size
-      ret.each do |s|
-        assert_equal "get", s.body
+
+      ret.each_with_index do |s, i|
+        assert_equal "echo #{i}", s.body
       end
     end
 
@@ -104,6 +109,7 @@ module Bixby
     def start_server
       @port = find_available_port()
       TestApp.set(:port, @port)
+      TestApp.set(:server, :puma)
       @url = "http://localhost:#{@port}"
       @server_thread = Thread.new do
         TestApp.run!
@@ -124,9 +130,9 @@ module Bixby
 
     # wait for server to come up
     def booted?
-      res = ::Net::HTTP.get_response(URI(@url))
+      res = ::Net::HTTP.get_response(URI.join(@url, "/boot"))
       if res.is_a?(::Net::HTTPSuccess) or res.is_a?(::Net::HTTPRedirection)
-        return res.body == "get"
+        return res.body == "booted"
       end
     rescue Errno::ECONNREFUSED, Errno::EBADF
       return false

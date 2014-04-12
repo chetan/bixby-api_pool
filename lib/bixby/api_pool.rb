@@ -86,7 +86,10 @@ module Bixby
       end
 
       @mon.wait_while { !finished? }
-      return ret.keys.map{ |k| ret[k] }
+
+      # sort of a cheap hack to return responses in the order they were requested
+      # since we work with arrays of requests only, we need to maintain the same order going back
+      return ret.keys.sort.map{ |k| ret[k] }
     end
 
     def finished?
