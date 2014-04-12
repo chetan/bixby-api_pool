@@ -3,17 +3,25 @@ require 'sinatra/base'
 
 class TestApp < Sinatra::Base
 
+  get "/boot" do
+    "booted"
+  end
+
   get "/" do
-    return "get"
+    "get"
+  end
+
+  get "/echo/:str" do
+    "echo #{params[:str]}"
   end
 
   post "/" do
-    return "post"
+    "post"
   end
 
   post "/json" do
     b = MultiJson.load(body)
-    return b["foo"]
+    b["foo"]
   end
 
 end
