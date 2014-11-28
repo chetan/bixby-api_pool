@@ -16,7 +16,9 @@ module Bixby
           return client_pools[key]
         end
         pool = client_pools[key] = Queue.new
-        size.times{ pool << Ethon::Easy.new }
+        # tell curl not to use signals
+        # see http://stackoverflow.com/questions/9191668/error-longjmp-causes-uninitialized-stack-frame
+        size.times{ pool << Ethon::Easy.new(:nosignal => 1) }
         pool
       end
 
