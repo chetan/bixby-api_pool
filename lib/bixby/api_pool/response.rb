@@ -1,54 +1,37 @@
 
-require 'bixby/api_pool/headers'
-
 module Bixby
   class APIPool
-    class Response < Hash
+    class Response
 
-      attr_reader :body, :details
+      attr_reader :response
+      attr_accessor :ex
 
-      def initialize(client)
-        @details = Ethon::Easy::Mirror.from_easy(client).options
-        @details.delete(:debug_info)
-        @body = client.response_body
-        @status_line = @status = @headers = nil
+      def initialize(res)
+        @response = res
+        @ex = nil
       end
 
-      def headers
-        @headers ||= parse_headers()
-      end
-
-      def return_code
-        @details[:return_code]
+      def body
+        @response.body
       end
 
       def status
-        @status ||= @details[:response_code]
-      end
-
-      def status_line
-        headers.status_line
+        if @status.nil? then
+          @status = @ex ? 0 : @response.code.to_i
+        end
+        @status
       end
 
       def success?
-        return_code == :ok && status && (status >= 200 && status < 300)
+        !@ex && status && (status >= 200 && status < 300)
       end
 
       def redirect?
-        return_code == :ok && status && (status == 301 || status == 302 || status == 303 || status == 307)
+        !@ex && status && (status == 301 || status == 302 || status == 303 || status == 307)
       end
 
       def error?
-        return_code != :ok || (!redirect? && !success?)
-      end
-
-
-      private
-
-      def parse_headers
-        h = Headers.new(@details.delete(:response_headers))
-        @header_str = nil
-        h
+        @ex || (!redirect? && !success?)
       end
 
     end

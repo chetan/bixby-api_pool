@@ -1,7 +1,7 @@
 
 require 'thread'
 require 'actionpool'
-require 'ethon'
+require 'net/http/persistent'
 
 require 'bixby/api_pool/request'
 require 'bixby/api_pool/response'
@@ -11,22 +11,11 @@ module Bixby
 
     class << self
 
-      def client_pool(key, size=4)
-        if client_pools.include? key then
-          return client_pools[key]
-        end
-        pool = client_pools[key] = Queue.new
-        # tell curl not to use signals
-        # see http://stackoverflow.com/questions/9191668/error-longjmp-causes-uninitialized-stack-frame
-        size.times{ pool << Ethon::Easy.new(:nosignal => 1) }
-        pool
+      def client_pool(key)
+        @client_pool ||= Net::HTTP::Persistent.new(key)
       end
 
-      def client_pools
-        @client_pools ||= {}
-      end
-
-      def thread_pool()
+      def thread_pool
         @thread_pool ||= ActionPool::Pool.new(:max_threads => thread_pool_size)
       end
 
@@ -38,23 +27,15 @@ module Bixby
         @thread_pool_size ||= 4
       end
 
-      def client_pool_size=(val)
-        @client_pool_size = val
-      end
-
-      def client_pool_size
-        @client_pool_size ||= 4
-      end
-
       # GET the list of URLs
       def get(urls, key)
         reqs = urls.map{ |u| Request.new(u) }
-        APIPool.new(client_pool(key, client_pool_size), thread_pool).fetch(reqs)
+        APIPool.new(client_pool(key), thread_pool).fetch(reqs)
       end
 
       def fetch(reqs, key)
         reqs = [reqs] if not reqs.kind_of? Array
-        APIPool.new(client_pool(key, client_pool_size), thread_pool).fetch(reqs)
+        APIPool.new(client_pool(key), thread_pool).fetch(reqs)
       end
 
     end
@@ -74,14 +55,13 @@ module Bixby
 
         @thread_pool.process {
           begin
-            c = @client_pool.pop
-            c.reset
-            c.http_request(r.url, r.action, r.options)
-            c.perform
-            ret[i] = Response.new(c)
+            ret[i] = Response.new(@client_pool.request(r.uri, r.to_net_http))
+          rescue Net::HTTP::Persistent::Error => ex
+            r = Response.new(nil)
+            r.ex = ex
+            ret[i] = r
           ensure
             @completed += 1
-            @client_pool << c
             @mon.broadcast if finished?
           end
         }

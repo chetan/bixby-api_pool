@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 gem "actionpool", "~> 0.2"
-gem "ethon", "~> 0.7"
+gem "net-http-persistent"
 
 group :development do
   gem "bundler", "~> 1.0"

@@ -8,12 +8,16 @@ module Bixby
 
     def setup
       super
-      start_server()
+      @test_server = TestServer.new
+      @test_server.start
+      @url = @test_server.url
     end
 
     def teardown
       super
-      stop_server()
+      @test_server.stop
+      pool = Bixby::APIPool.client_pool(@url)
+      pool.shutdown
     end
 
     def test_simple_get
@@ -26,8 +30,7 @@ module Bixby
       assert res.success?
       assert_equal "get", res.body
       assert_equal 200, res.status
-      assert_equal "3", res.headers["Content-Length"]
-      assert_equal :ok, res.return_code
+      assert_equal "3", res.response["Content-Length"]
     end
 
     def test_not_found
@@ -41,11 +44,10 @@ module Bixby
       refute res.redirect?
       assert res.error?
       assert_equal 404, res.status
-      assert_equal :ok, res.return_code
     end
 
     def test_timeout
-      bad_url = "http://localhost:" + find_available_port().to_s
+      bad_url = "http://localhost:" + (TestServer.find_available_port()+1).to_s
       ret = Bixby::APIPool.get([bad_url], "test")
       assert ret
       assert_kind_of Array, ret
@@ -56,7 +58,6 @@ module Bixby
       refute res.redirect?
       assert res.error?
       assert_equal 0, res.status
-      assert_equal :couldnt_connect, res.return_code
     end
 
     # check that we get our responses back in the same order they were sent
@@ -99,51 +100,8 @@ module Bixby
       assert ret
       assert_kind_of Array, ret
       assert_equal 1, ret.size
+      p ret.first
       assert_equal "post", ret.first.body
-    end
-
-
-
-    private
-
-    def start_server
-      @port = find_available_port()
-      TestApp.set(:port, @port)
-      TestApp.set(:server, :puma)
-      @url = "http://localhost:#{@port}"
-      @server_thread = Thread.new do
-        TestApp.run!
-      end
-      Timeout::timeout(5) do
-        while !booted? do
-          sleep 0.1
-        end
-      end
-    end
-
-    def stop_server
-      if @server_thread && @server_thread.alive? then
-        TestApp.stop!
-        # @server_thread.join
-      end
-    end
-
-    # wait for server to come up
-    def booted?
-      res = ::Net::HTTP.get_response(URI.join(@url, "/boot"))
-      if res.is_a?(::Net::HTTPSuccess) or res.is_a?(::Net::HTTPRedirection)
-        return res.body == "booted"
-      end
-    rescue Errno::ECONNREFUSED, Errno::EBADF
-      return false
-    end
-
-    # find a random open tcp port
-    def find_available_port
-      server = TCPServer.new('127.0.0.1', 0)
-      server.addr[1]
-    ensure
-      server.close if server
     end
 
   end

@@ -10,14 +10,13 @@ rescue Bundler::BundlerError => e
 end
 
 require 'micron/minitest'
-# require 'webmock'
-# require 'mocha/setup'
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'bixby-api_pool'
 
 require "base"
-require "support/webserver"
+require "support/app"
+require "support/server"
 
 Dir.glob(File.dirname(__FILE__) + "/../lib/**/*.rb").each{ |f| require f }
