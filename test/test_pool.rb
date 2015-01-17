@@ -70,8 +70,8 @@ module Bixby
       assert_kind_of Array, ret
       assert_equal 10, ret.size
 
-      ret.each_with_index do |s, i|
-        assert_equal "echo #{i}", s.body
+      10.times do |i|
+        assert_equal "echo #{i}", ret[i].body
       end
     end
 

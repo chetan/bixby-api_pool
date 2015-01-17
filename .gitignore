@@ -5,3 +5,4 @@ doc
 pkg
 .DS_Store
 *.swp
+.micron/

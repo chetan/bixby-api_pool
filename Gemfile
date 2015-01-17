@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-gem "actionpool", "~> 0.2"
+gem "bixby-common"
 gem "net-http-persistent"
 
 group :development do

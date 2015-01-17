@@ -1,10 +1,11 @@
 
-require 'thread'
-require 'actionpool'
-require 'net/http/persistent'
+require 'bixby-common'
 
 require 'bixby/api_pool/request'
 require 'bixby/api_pool/response'
+
+require 'thread'
+require 'net/http/persistent'
 
 module Bixby
   class APIPool
@@ -16,7 +17,8 @@ module Bixby
       end
 
       def thread_pool
-        @thread_pool ||= ActionPool::Pool.new(:max_threads => thread_pool_size)
+        min_size = thread_pool_size <= 4 ? 1 : 4
+        @thread_pool ||= Bixby::ThreadPool.new(:min_size => min_size, :max_size => thread_pool_size)
       end
 
       def thread_pool_size=(val)
@@ -41,19 +43,17 @@ module Bixby
     end
 
     def initialize(client_pool, thread_pool)
-      @mon = Splib::Monitor.new
       @client_pool = client_pool
       @thread_pool = thread_pool
-      @completed = 0
-      @total = 0
     end
 
     def fetch(reqs)
-      @total = reqs.size
+      mon = Monitor.new
+      sig = mon.new_cond
+
       ret = {}
       reqs.each_with_index do |r, i|
-
-        @thread_pool.process {
+        @thread_pool.perform {
           begin
             ret[i] = Response.new(@client_pool.request(r.uri, r.to_net_http))
           rescue Net::HTTP::Persistent::Error => ex
@@ -61,21 +61,22 @@ module Bixby
             r.ex = ex
             ret[i] = r
           ensure
-            @completed += 1
-            @mon.broadcast if finished?
+            mon.synchronize {
+              sig.broadcast if ret.size == reqs.size
+            }
           end
         }
       end
 
-      @mon.wait_while { !finished? }
+      mon.synchronize {
+        sig.wait_while { ret.size != reqs.size }
+      }
 
       # sort of a cheap hack to return responses in the order they were requested
       # since we work with arrays of requests only, we need to maintain the same order going back
-      return ret.keys.sort.map{ |k| ret[k] }
-    end
-
-    def finished?
-      @total == @completed
+      result = []
+      reqs.size.times{ |i| result << ret[i] }
+      return result
     end
 
   end
